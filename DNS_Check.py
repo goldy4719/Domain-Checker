@@ -113,7 +113,7 @@ def check_domain(domain):
         dmarc_records = dns.resolver.resolve(dmarc_address, "TXT")
         #Print out dmarc settings
         for record in dmarc_records:
-            dmarcPrinter(record.to_text(dmarc_records))
+            dmarcPrinter(record.to_text())
     except Exception as e:
         print(f"No DMARC record found. {e}")
 

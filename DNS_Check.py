@@ -14,6 +14,56 @@ I initially created a script similar to this during my internship, but this is a
 import dns.resolver
 import sys
 
+#Print out dmarc settings
+def dmarcPrinter(record_txt):
+
+    print("DMARC Found: ")
+
+# Use a dictionary to transalate terms
+    tag_dictionary = {
+        "v" : "version",
+        "p" : "protection",
+        "rua": "send aggregates to",
+        "ruf": "send forensics to",
+        "pct" : "filter %",
+        "sp" : "subdomain policy",
+        "adkim" : "DKIM alignment",
+        "aspf" : "spf alignment"
+    }
+
+    try:
+        #Remove quotes and split up tags
+        tags = record_txt.strip('"').split(';')
+
+        #For every tag remove white space
+        for tag in tags:
+            tag.strip()
+            if not tag:
+                continue
+
+        #Split at equals, get definition and print
+            parts = tag.split('=')
+            if len(parts) == 2:
+                key = parts[0].strip()
+                value = parts[1].strip()
+
+                name = tag_dictionary.get(key, key)
+
+                print(f"| {name} ({key}) : {value} | ")
+
+    except Exception as e:
+        print(f"Error printing DMARC records: {e}")
+
+
+
+
+
+
+
+
+
+
+
 #Create a domain checker, when given domain it sorts
 #through the DNS records, getting the address with the dns resolver
 # then printing every address that was returned
@@ -49,12 +99,23 @@ def check_domain(domain):
             record_text = record.to_text()
             if "v=spf1" in record_text:
                 print(f" SPF | {record.to_text()} |")
-            elif "v=DMARC1" in record_text:
-                print(f" DMARC | {record.to_text()} |")
+
             else:
                 print(f"Other | {record.to_text()} |")
+
     except Exception as e:
         print (f"TXT Record not found: {e}")
+
+#Find dmarc records at the dmarc address
+    try:
+        dmarc_address = ("_dmarc." + domain)
+        print(f"Checking DMARC record at: ({dmarc_address})")
+        dmarc_records = dns.resolver.resolve(dmarc_address, "TXT")
+        #Print out dmarc settings
+        for record in dmarc_records:
+            dmarcPrinter(record.to_text(dmarc_records))
+    except Exception as e:
+        print(f"No DMARC record found. {e}")
 
 
 #Little error check to make sure user correctly calls
